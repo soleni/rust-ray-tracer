@@ -49,20 +49,39 @@ impl fmt::Display for Vec3 {
     }
 }
 
-impl Add for Vec3 {
+// Vec + Vec
+impl Add<Vec3> for Vec3 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
         Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
     }
 }
-impl Sub for Vec3 {
+impl Add<&Vec3> for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: &Self) -> Self {
+        Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
+    }
+}
+
+// Vec - Vec
+impl Sub<Vec3> for Vec3 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
         Self(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2)
     }
 }
+impl Sub<&Vec3> for Vec3 {
+    type Output = Self;
+
+    fn sub(self, rhs: &Self) -> Self {
+        Self(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2)
+    }
+}
+
+// Vec * Vec
 impl Mul<Vec3> for Vec3 {
     type Output = Self;
 
@@ -70,11 +89,36 @@ impl Mul<Vec3> for Vec3 {
         Self(self.0 * rhs.0, self.1 * rhs.1, self.2 * rhs.2)
     }
 }
+impl Mul<&Vec3> for Vec3 {
+    type Output = Self;
+
+    fn mul(self, rhs: &Self) -> Self {
+        Self(self.0 * rhs.0, self.1 * rhs.1, self.2 * rhs.2)
+    }
+}
+
+// Vec * f32
 impl Mul<f32> for Vec3 {
     type Output = Self;
 
     fn mul(self, rhs: f32) -> Self {
         Self(self.0 * rhs, self.1 * rhs, self.2 * rhs)
+    }
+}
+impl Mul<&f32> for Vec3 {
+    type Output = Self;
+
+    fn mul(self, rhs: &f32) -> Self {
+        Self(self.0 * rhs, self.1 * rhs, self.2 * rhs)
+    }
+}
+
+// Vec / Vec
+impl Div<&Vec3> for Vec3 {
+    type Output = Self;
+
+    fn div(self, rhs: &Self) -> Self {
+        Self(self.0 / rhs.0, self.1 / rhs.1, self.2 / rhs.2)
     }
 }
 impl Div<Vec3> for Vec3 {
@@ -84,6 +128,8 @@ impl Div<Vec3> for Vec3 {
         Self(self.0 / rhs.0, self.1 / rhs.1, self.2 / rhs.2)
     }
 }
+
+// Vec / f32
 impl Div<f32> for Vec3 {
     type Output = Self;
 
@@ -91,34 +137,82 @@ impl Div<f32> for Vec3 {
         Self(self.0 / rhs, self.1 / rhs, self.2 / rhs)
     }
 }
+impl Div<&f32> for Vec3 {
+    type Output = Self;
 
-impl AddAssign for Vec3 {
+    fn div(self, rhs: &f32) -> Self {
+        Self(self.0 / rhs, self.1 / rhs, self.2 / rhs)
+    }
+}
+
+// Vec += Vec
+impl AddAssign<Vec3> for Vec3 {
     fn add_assign(&mut self, rhs: Self) {
         *self = Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2);
     }
 }
-impl SubAssign for Vec3 {
+impl AddAssign<&Vec3> for Vec3 {
+    fn add_assign(&mut self, rhs: &Self) {
+        *self = Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2);
+    }
+}
+
+// Vec -= Vec
+impl SubAssign<Vec3> for Vec3 {
     fn sub_assign(&mut self, rhs: Self) {
         *self = Self(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2);
     }
 } 
+impl SubAssign<&Vec3> for Vec3 {
+    fn sub_assign(&mut self, rhs: &Self) {
+        *self = Self(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2);
+    }
+} 
+
+// Vec *= Vec
 impl MulAssign<Vec3> for Vec3 {
     fn mul_assign(&mut self, rhs: Self) {
         *self = Self(self.0 * rhs.0, self.1 * rhs.1, self.2 * rhs.2);
     }
 }
+impl MulAssign<&Vec3> for Vec3 {
+    fn mul_assign(&mut self, rhs: &Self) {
+        *self = Self(self.0 * rhs.0, self.1 * rhs.1, self.2 * rhs.2);
+    }
+}
+
+//Vec *= f32
 impl MulAssign<f32> for Vec3 {
     fn mul_assign(&mut self, rhs: f32) {
         *self = Self(self.0 * rhs, self.1 * rhs, self.2 * rhs);
     }
 }
+impl MulAssign<&f32> for Vec3 {
+    fn mul_assign(&mut self, rhs: &f32) {
+        *self = Self(self.0 * rhs, self.1 * rhs, self.2 * rhs);
+    }
+}
+
+// Vec /= Vec
 impl DivAssign<Vec3> for Vec3 {
     fn div_assign(&mut self, rhs: Self) {
         *self = Self(self.0 / rhs.0, self.1 / rhs.1, self.2 / rhs.2);
     }
 }
+impl DivAssign<&Vec3> for Vec3 {
+    fn div_assign(&mut self, rhs: &Self) {
+        *self = Self(self.0 / rhs.0, self.1 / rhs.1, self.2 / rhs.2);
+    }
+}
+
+// Vec /= f32
 impl DivAssign<f32> for Vec3 {
     fn div_assign(&mut self, rhs: f32) {
+        *self = Self(self.0 / rhs, self.1 / rhs, self.2 / rhs);
+    }
+}
+impl DivAssign<&f32> for Vec3 {
+    fn div_assign(&mut self, rhs: &f32) {
         *self = Self(self.0 / rhs, self.1 / rhs, self.2 / rhs);
     }
 }
