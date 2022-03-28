@@ -2,6 +2,10 @@ use std::io;
 use std::fs::File;
 use std::io::Write;
 
+mod vec3;
+
+use vec3::Vec3;
+
 fn main() -> io::Result<()> {
     let mut writer = File::create("output.ppm").unwrap();
 
@@ -12,13 +16,11 @@ fn main() -> io::Result<()> {
 
     for j in (0..ny).rev() {
         for i in 0..nx {
-            let r = i as f32 / nx as f32;
-            let g = j as f32 / ny as f32;
-            let b: f32 = 0.2;
+            let v = Vec3::new(i as f32 / nx as f32, j as f32 / ny as f32, 0.2);
 
-            let ir = (r * 255.99) as i32;
-            let ig = (g * 255.99) as i32;
-            let ib = (b * 255.99) as i32;
+            let ir = (v[0] * 255.99) as i32;
+            let ig = (v[1] * 255.99) as i32;
+            let ib = (v[2] * 255.99) as i32;
 
             writeln!(&mut writer, "{} {} {}", ir, ig, ib).unwrap();
         }
