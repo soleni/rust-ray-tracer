@@ -3,8 +3,10 @@ use std::fs::File;
 use std::io::Write;
 
 mod vec3;
+mod ray;
 
 use vec3::Vec3;
+use ray::Ray;
 
 fn main() -> io::Result<()> {
     let mut writer = File::create("output.ppm").unwrap();
@@ -16,7 +18,7 @@ fn main() -> io::Result<()> {
 
     for j in (0..ny).rev() {
         for i in 0..nx {
-            let v = Vec3::new(i as f32 / nx as f32, j as f32 / ny as f32, 0.2);
+            let v = Vec3{x: i as f32 / nx as f32, y: j as f32 / ny as f32, z: 0.2};
 
             let ir = (v[0] * 255.99) as i32;
             let ig = (v[1] * 255.99) as i32;
@@ -25,6 +27,13 @@ fn main() -> io::Result<()> {
             writeln!(&mut writer, "{} {} {}", ir, ig, ib).unwrap();
         }
     }
+    let v1 = vec3::unit_vector();
+    let v2 = vec3::unit_vector() * 2.0;
 
+    println!("{}", v1.length());
+    println!("{}", v1.squared_length());
+
+    let r1 = Ray{a : v1, b: v2};
+    
     Ok(())
 }
