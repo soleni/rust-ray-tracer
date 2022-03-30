@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use std::io;
 use std::fs::File;
 use std::io::Write;
@@ -27,13 +29,6 @@ fn main() -> io::Result<()> {
             writeln!(&mut writer, "{} {} {}", ir, ig, ib).unwrap();
         }
     }
-    let v1 = vec3::unit_vector();
-    let v2 = vec3::unit_vector() * 2.0;
 
-    println!("{}", v1.length());
-    println!("{}", v1.squared_length());
-
-    let r1 = Ray{a : v1, b: v2};
-    
     Ok(())
 }

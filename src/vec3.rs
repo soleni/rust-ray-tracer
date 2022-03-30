@@ -2,6 +2,7 @@
 
 use std::fmt;
 use std::ops::*;
+use float_cmp::*;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3{
@@ -39,6 +40,17 @@ impl Vec3 {
     }
     pub fn squared_length(&self) -> f32{
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+}
+
+impl<'a> ApproxEq for &'a Vec3 {
+    type Margin = F32Margin;
+
+    fn approx_eq<T: Into<Self::Margin>>(self, other: &Vec3, margin : T) -> bool {
+        let margin = margin.into();
+        self.x.approx_eq(other.x , margin) &&
+        self.y.approx_eq(other.y , margin) &&
+        self.z.approx_eq(other.z , margin)
     }
 }
 
@@ -250,4 +262,68 @@ impl IndexMut<u32> for Vec3 {
             _ => panic!("Vec3 bad index!"),
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn length() {
+        let v = unit_vector();
+        assert_approx_eq!(f32, v.length(), 3_f32.sqrt());
+        assert_approx_eq!(f32, v.squared_length(), 3.0);
+    }
+
+    #[test]
+    fn eq_is_correct() {
+        assert_approx_eq!(&Vec3, &unit_vector(), &unit_vector());
+    }
+    #[test]
+    #[should_panic]
+    fn neq_is_correct() {
+        assert_approx_eq!(&Vec3, &unit_vector(), &Vec3{x: 6.0, y: 6.0, z: 6.0});
+    }
+
+    #[test]
+    fn add_is_correct() {
+        let mut v = unit_vector() + unit_vector();
+        v += unit_vector();
+        assert_approx_eq!(&Vec3, &v, &Vec3{x: 3.0, y: 3.0, z: 3.0}) 
+    }
+
+    #[test]
+    fn sub_is_correct() {
+        let mut v = Vec3{x: 3.0, y: 3.0, z: 3.0} - unit_vector();
+        v -= unit_vector();
+        assert_approx_eq!(&Vec3, &v, &unit_vector()) 
+    }
+
+    #[test]
+    fn multiply_is_correct() {
+        let mut v: Vec3 = unit_vector() * 2.0;
+        v *= unit_vector() * 3.0;
+        assert_approx_eq!(&Vec3, &v, &Vec3{x: 6.0, y: 6.0, z: 6.0}) 
+    }
+
+    #[test]
+    fn divide_is_correct() {
+        let mut v: Vec3 = Vec3{x: 6.0, y: 6.0, z: 6.0} / 2.0 / unit_vector();
+        v /= 3.0;
+        assert_approx_eq!(&Vec3, &v, &unit_vector()) 
+    }
+
+    #[test]
+    fn neg_is_correct() {
+        let v = Vec3{x: -1.0, y: -1.0, z: -1.0};
+        assert_approx_eq!(&Vec3, &(-unit_vector()), &v);
+    } 
+
+    #[test]
+    fn indexing_is_correct() {
+        let v = Vec3{x: 1.0, y: 2.0, z: 3.0};
+        assert_approx_eq!(f32, v[0], 1.0);
+        assert_approx_eq!(f32, v[1], 2.0);
+        assert_approx_eq!(f32, v[2], 3.0);
+    } 
 }
