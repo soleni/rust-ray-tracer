@@ -1,3 +1,3 @@
 Following
-[Ray Tracing in a Weekend](http://www.realtimerendering.com/raytracing/Ray%20Tracing%20in%20a%20Weekend.pdf)
+[Ray Tracing in a Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
 .
