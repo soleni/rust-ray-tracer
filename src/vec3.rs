@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 
 use std::fmt;
+use std::io;
+use std::fs::File;
+use std::io::Write;
 use std::ops::*;
 use float_cmp::*;
 
@@ -11,35 +14,35 @@ pub struct Vec3{
     pub z : f32
 }
 
-pub fn unit_vector() -> Vec3 {
+pub fn make_vec3(x : f32, y : f32, z: f32) -> Vec3
+{
+    Vec3{x: x, y: y, z: z}
+}
+
+pub fn write_color(writer : &mut File, mut v : Vec3)
+{   
+    v *= 255.99;
+    writeln!(writer, "{} {} {}", v.x as i32, v.y as i32, v.z as i32).unwrap();
+}
+
+pub fn unit_vector() -> Vec3 { // is not unit actually
     Vec3{x : 1.0 , y: 1.0, z: 1.0}
 }
 
 impl Vec3 {
-    pub fn x(&self) -> f32{
-        self.x
-    }
-    pub fn y(&self) -> f32{
-        self.y
-    }
-    pub fn z(&self) -> f32{
-        self.z
-    }
-    pub fn r(&self) -> f32{
-        self.x
-    }
-    pub fn g(&self) -> f32{
-        self.y
-    }
-    pub fn b(&self) -> f32{
-        self.z
-    }
-
     pub fn length(&self) -> f32{
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
     pub fn squared_length(&self) -> f32{
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    pub fn unit_vector(&self) -> Vec3{
+        *self / self.length()
+    }
+    pub fn make_unit(&mut self) -> Vec3{
+        *self /= self.length();
+        *self
     }
 }
 
@@ -279,10 +282,11 @@ mod tests {
     fn eq_is_correct() {
         assert_approx_eq!(&Vec3, &unit_vector(), &unit_vector());
     }
+
     #[test]
     #[should_panic]
     fn neq_is_correct() {
-        assert_approx_eq!(&Vec3, &unit_vector(), &Vec3{x: 6.0, y: 6.0, z: 6.0});
+        assert_approx_eq!(&Vec3, &unit_vector(), &Vec3{x: 6.0, y: 6.0, z: 6.0})
     }
 
     #[test]
@@ -315,8 +319,9 @@ mod tests {
 
     #[test]
     fn neg_is_correct() {
-        let v = Vec3{x: -1.0, y: -1.0, z: -1.0};
-        assert_approx_eq!(&Vec3, &(-unit_vector()), &v);
+        let v1 = Vec3{x: -1.0, y: -1.0, z: -1.0};
+        let v2 = Vec3{x: 1.0, y: 1.0, z: 1.0};
+        assert_approx_eq!(&Vec3, &(-v1), &v2);
     } 
 
     #[test]
@@ -326,4 +331,11 @@ mod tests {
         assert_approx_eq!(f32, v[1], 2.0);
         assert_approx_eq!(f32, v[2], 3.0);
     } 
+
+    #[test]
+    fn uniting_is_correct() {
+        let mut v = Vec3{x: 1.0, y: 2.0, z: 3.0};
+        assert_approx_eq!(f32, v.unit_vector().length(), 1.0);
+        assert_approx_eq!(f32, v.make_unit().length(), 1.0);
+    }
 }
