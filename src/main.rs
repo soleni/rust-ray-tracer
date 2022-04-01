@@ -10,6 +10,8 @@ mod ray;
 use vec3::Vec3;
 use ray::Ray;
 
+use indicatif::ProgressBar;
+
 fn main() -> io::Result<()> {
     let mut writer = File::create("output.ppm").unwrap();
 
@@ -18,8 +20,11 @@ fn main() -> io::Result<()> {
 
     write!(&mut writer, "P3\n{} {}\n255\n",nx, ny).unwrap();
 
+    let bar = ProgressBar::new(ny*nx);
     for j in (0..ny).rev() {
         for i in 0..nx {
+            bar.inc(1);
+
             let v = Vec3{x: i as f32 / nx as f32, y: j as f32 / ny as f32, z: 0.2};
 
             let ir = (v[0] * 255.99) as i32;
@@ -29,6 +34,7 @@ fn main() -> io::Result<()> {
             writeln!(&mut writer, "{} {} {}", ir, ig, ib).unwrap();
         }
     }
+    bar.finish();
 
     Ok(())
 }
