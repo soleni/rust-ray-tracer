@@ -12,10 +12,22 @@ use ray::*;
 
 use indicatif::ProgressBar;
 
+fn hit_sphere(center: &Vec3, radius: f32, r: &Ray) -> bool {
+    let oc = r.origin() - center;
+    let a = dot(&r.direction(), &r.direction());
+    let b = 2.0 * dot(&oc, &r.direction());
+    let c = dot(&oc, &oc) - radius*radius;
+    let d = b*b - 4.0*a*c;
+    d > 0.0
+}
+
 fn color(ray : &Ray) -> Vec3 {
+    if hit_sphere(&make_vec3(0.0, 0.0, -1.0), 0.5, &ray) {
+        return make_vec3(1.0, 0.0, 0.0)
+    } 
     let unit_direction = ray.direction().unit_vector();
     let t = 0.5 * (unit_direction.y + 1.0);
-    make_vec3(1.0, 1.0,1.0) * (1.0 - t) + make_vec3(0.5, 0.7, 1.0) * t
+    make_vec3(1.0, 1.0,1.0) * (1.0 - t) + make_vec3(0.2, 0.5, 1.0) * t
 }
 
 fn main() -> io::Result<()> {
