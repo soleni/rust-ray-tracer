@@ -3,8 +3,8 @@
 use crate::ray;
 use crate::vec3;
 
-use ray::Ray;
-use vec3::Vec3;
+use ray::*;
+use vec3::*;
 
 pub struct HitRecord {
     pub t: f32,

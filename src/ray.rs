@@ -3,7 +3,7 @@
 use crate::vec3;
 
 use vec3::Vec3;
-
+            
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Ray {

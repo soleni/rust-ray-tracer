@@ -8,6 +8,11 @@ use indicatif::ProgressBar;
 use std::io;
 use std::fs::File;
 use std::io::Write;
+use std::rc::Rc;
+use threadpool::ThreadPool;
+use std::sync::Mutex;
+use std::sync::{Arc, Barrier};
+use std::time::{Duration, Instant};
 
 mod vec3;
 mod ray;
@@ -24,23 +29,18 @@ use hitable::*;
 use hitablelist::*;
 use camera::*;
 
-fn random_in_unit_sphere() -> Vec3{
-    let mut p: Vec3;
-    let mut rng = rand::thread_rng();
-    loop {
-        p = make_vec3(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>());
-        if p.squared_length() > 1.0 {
-            break;
-        }
-    }
-    p
-}
+static NX: u32 = 800;
+static NY: u32 = 400;
+static NS: u32 = 30;
 
+static THREADS_NUM: usize = 6;
+
+// get color for ray
 fn color<T: Hitable>(ray : &Ray, world: &HitableList<T>) -> Vec3 {
     let mut rec = HitRecord{t: 0.0, p: unit_vector(), normal: unit_vector()};
     if world.hit(ray, 0.0, f32::MAX, &mut rec) {
         let target = rec.p + rec.normal + random_in_unit_sphere();
-        return color( &Ray{a: rec.p, b: target - rec.p}, &world) * 0.5;
+        return color( &Ray{a: rec.p, b: target - rec.p}, world) * 0.5;
     } else {
         let unit_direction = ray.direction().unit_vector();
         let t = 0.5 * (unit_direction.y + 1.0);
@@ -48,40 +48,64 @@ fn color<T: Hitable>(ray : &Ray, world: &HitableList<T>) -> Vec3 {
     }
 }
 
+// launch precess ray to pixel (x,y)
+fn make_ray<T: Hitable>(camera: &Camera, world: &HitableList<T>, x: u32, y: u32) -> Vec3 {
+    let mut col = make_vec3(0.0, 0.0, 0.0);
+    for _s in 0..NS {
+        let mut rng = rand::thread_rng();
+        let u = (x as f32 + rng.gen::<f32>() as f32) / NX as f32;
+        let v = (y as f32 + rng.gen::<f32>() as f32) / NY as f32;
+        let r = camera.get_ray(u, v);
+        let _p = r.point_at_parameter(2.0);
+        col += color(&r, world);
+    }
+    col /= NS as f32;
+    col = col.sqrt();
+    col *= 255.99;
+
+    col
+}
+
 fn main() -> io::Result<()> {
-    let mut rng = rand::thread_rng();
+    let now = Instant::now();
 
-    let nx = 800;
-    let ny = 400; 
-    let ns = 30;
-    let mut img_buffer: RgbImage = ImageBuffer::new(nx, ny);
+    // Png output image buffer
+    let img_buffer = Arc::new(Mutex::new(ImageBuffer::new(NX, NY)));
 
+    // Prerender objects
     let hitable = vec![ make_sphere(&make_vec3(0.0, 0.0, -1.0), 0.5),
                                     make_sphere(&make_vec3(0.0, -100.5, -1.0), 100.0)];
     let world = make_hitable_list(hitable, 2);
     let camera = standart_camera();
-
-    let bar = ProgressBar::new(ny as u64);
-    for j in (0..ny).rev() {
-        bar.inc(1);
-        for i in 0..nx {
-            let mut col = make_vec3(0.0, 0.0, 0.0);
-            for _s in 0..ns {
-                let u = (i as f32 + rng.gen::<f32>() as f32) / nx as f32;
-                let v = (j as f32 + rng.gen::<f32>() as f32) / ny as f32;
-                let r = camera.get_ray(u, v);
-                let p = r.point_at_parameter(2.0);
-                col += color(&r, &world);
-            }
-            col /= ns as f32;
-            col = col.sqrt();
-
-            col *= 255.99;
-            img_buffer.put_pixel(nx - i - 1, ny - j - 1, image::Rgb([col.x as u8, col.y as u8, col.z as u8]));
-        }
-    }
-    bar.finish();
+ 
+    // Progress Bar
+    let bar = ProgressBar::new(100);
+    let bar_counter = ((NX * NY) as f32 / 100.0) as u32;
     
-    img_buffer.save("output.png").unwrap();
+    let pool = ThreadPool::new(THREADS_NUM);
+    for j in (0..NY).rev() {
+        for i in 0..NX {
+            // THIS IS SHIT
+            // THIS IS SHIT
+            // THIS IS SHIT
+            let img_buffer = Arc::clone(&img_buffer);
+            let camera = camera.clone();
+            let world = world.clone();
+            pool.execute(move ||{
+                let col = make_ray(&camera, &world, i, j);
+                img_buffer.lock().unwrap().put_pixel(NX - i - 1, NY - j - 1, image::Rgb([col.x as u8, col.y as u8, col.z as u8]));
+            });            
+
+            if (j*NX + i) % bar_counter == 0 {
+                bar.inc(1);
+            }
+        }
+        pool.join();
+    } 
+    bar.finish();
+
+    img_buffer.lock().unwrap().save("output.png").unwrap();
+
+    println!("Time elapsed: {} sec.", now.elapsed().as_secs());
     Ok(())
 }

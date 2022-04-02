@@ -8,6 +8,7 @@ use ray::*;
 use vec3::*;
 use hitable::*;
 
+#[derive(Debug, Copy, Clone)]
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,

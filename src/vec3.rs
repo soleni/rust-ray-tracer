@@ -2,6 +2,7 @@
 
 use std::fmt;
 use std::io;
+use rand::Rng;
 use std::fs::File;
 use std::io::Write;
 use std::ops::*;
@@ -27,6 +28,11 @@ pub fn write_color(writer : &mut File, mut v : Vec3)
 
 pub fn unit_vector() -> Vec3 { // is not unit actually
     Vec3{x : 1.0 , y: 1.0, z: 1.0}
+}
+
+pub fn random_in_unit_sphere() -> Vec3{
+    let mut rng = rand::thread_rng();
+    make_vec3(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
 }
 
 impl Vec3 {
