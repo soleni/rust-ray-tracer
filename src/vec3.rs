@@ -44,6 +44,10 @@ impl Vec3 {
         *self /= self.length();
         *self
     }
+
+    pub fn sqrt(&self) -> Self{
+        Self{x: self.x.sqrt(), y: self.y.sqrt(), z: self.z.sqrt()}
+    }
 }
 
 pub fn dot(v1 : &Vec3, v2: &Vec3) -> f32 {
