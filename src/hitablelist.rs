@@ -10,18 +10,18 @@ use hitable::*;
 
 use std::vec::Vec;
 
-#[derive(Debug, Clone)]
-pub struct HitableList<T> {
-    pub list: Vec<T>,
+#[derive(Clone)]
+pub struct HitableList<'a> {
+    pub list: Vec<&'a dyn Hitable>,
     pub n: i32,
 }
 
-pub fn make_hitable_list<T>(list: Vec<T>, n: i32) -> HitableList<T> {
+pub fn make_hitable_list<'a>(list: Vec<&'a dyn Hitable>, n: i32) -> HitableList<'a> {
     HitableList{list, n}
 }   
 
-impl<T: Hitable> Hitable for HitableList<T>{
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool{
+impl Hitable for HitableList<'_>{
+    fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord<'a>) -> bool {
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
         for obj in &self.list {

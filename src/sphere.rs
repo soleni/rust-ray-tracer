@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use crate::materials::Material;
 use crate::ray;
 use crate::vec3;
 use crate::hitable;
@@ -8,18 +9,16 @@ use ray::*;
 use vec3::*;
 use hitable::*;
 
-#[derive(Debug, Copy, Clone)]
-pub struct Sphere {
+
+#[derive(Clone)]
+pub struct Sphere<'a>{
     pub center: Vec3,
     pub radius: f32,
+    pub material: &'a dyn Material,
 }
 
-pub fn make_sphere(cen: &Vec3, r: f32) -> Sphere {
-    Sphere{center: *cen, radius: r}
-}
-
-impl Hitable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool{
+impl Hitable for Sphere<'_> {
+    fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord<'a>) -> bool{
         let oc = ray.origin() - self.center;
         let a = dot(&ray.direction(), &ray.direction());
         let b = dot(&oc, &ray.direction());
@@ -32,6 +31,7 @@ impl Hitable for Sphere {
                 rec.t = tmp;
                 rec.p = ray.point_at_parameter(tmp);
                 rec.normal = (rec.p - self.center) / self.radius;
+                rec.material = self.material;
                 return true
             }
             tmp = (-b + (b*b - a*c).sqrt()) / a;
@@ -39,6 +39,7 @@ impl Hitable for Sphere {
                 rec.t = tmp;
                 rec.p = ray.point_at_parameter(tmp);
                 rec.normal = (rec.p - self.center) / self.radius;
+                rec.material = self.material;
                 return true
             }
         }
