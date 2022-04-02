@@ -16,7 +16,7 @@ pub struct Vec3{
 
 pub fn make_vec3(x : f32, y : f32, z: f32) -> Vec3
 {
-    Vec3{x: x, y: y, z: z}
+    Vec3{x, y, z}
 }
 
 pub fn write_color(writer : &mut File, mut v : Vec3)
