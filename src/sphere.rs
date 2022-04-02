@@ -8,16 +8,16 @@ use ray::*;
 use vec3::*;
 use hitable::*;
 
-pub struct Sphere{
+pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
 }
 
-pub fn make_sphere(cen: &Vec3, r: f32) -> Sphere{
+pub fn make_sphere(cen: &Vec3, r: f32) -> Sphere {
     Sphere{center: *cen, radius: r}
 }
 
-impl Hitable for Sphere{
+impl Hitable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool{
         let oc = ray.origin() - self.center;
         let a = dot(&ray.direction(), &ray.direction());

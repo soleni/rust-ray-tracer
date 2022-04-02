@@ -10,7 +10,7 @@ use hitable::*;
 
 use std::vec::Vec;
 
-pub struct HitableList<T>{
+pub struct HitableList<T> {
     pub list: Vec<T>,
     pub n: i32,
 }

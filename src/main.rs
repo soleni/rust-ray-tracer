@@ -9,12 +9,15 @@ mod ray;
 mod sphere;
 mod hitable;
 mod hitablelist;
+mod camera;
 
+use rand::prelude::*;
 use vec3::*;
 use ray::*;
 use sphere::*;
 use hitable::*;
 use hitablelist::*;
+use camera::*;
 
 use indicatif::ProgressBar;
 
@@ -34,31 +37,34 @@ fn main() -> io::Result<()> {
 
     let nx = 400;
     let ny = 200;
-    write!(&mut writer, "P3\n{} {}\n255\n",nx, ny).unwrap();
+    let ns = 50;
+    let mut rng = rand::thread_rng();
 
-    let lower_left_corner = make_vec3(-2.0, -1.0, -1.0);
-    let horizontal = make_vec3(4.0, 0.0, 0.0);
-    let vertical = make_vec3(0.0, 2.0, 0.0);
-    let origin = make_vec3(0.0, 0.0, 0.0);
+    write!(&mut writer, "P3\n{} {}\n255\n",nx, ny).unwrap();
 
     let hitable = vec![ make_sphere(&make_vec3(0.0, 0.0, -1.0), 0.5),
                                     make_sphere(&make_vec3(0.0, -100.5, -1.0), 100.0)];
     let world = make_hitable_list(hitable, 2);
+    let camera = standart_camera();
 
-    //let bar = ProgressBar::new(ny*nx);
+    let bar = ProgressBar::new(ny*nx);
     for j in (0..ny).rev() {
         for i in 0..nx {
-            //bar.inc(1);
-            let u = i as f32 / nx as f32;
-            let v = j as f32 / ny as f32;
-
-            let ray = Ray{a: origin, b: lower_left_corner + horizontal * u + vertical * v};
-            let col = color(&ray, &world);
+            bar.inc(1);
+            let mut col = make_vec3(0.0, 0.0, 0.0);
+            for _s in 0..ns {
+                let u = (i as f32 + rng.gen::<f32>() as f32) / nx as f32;
+                let v = (j as f32 + rng.gen::<f32>() as f32) / ny as f32;
+                let r = camera.get_ray(u, v);
+                let p = r.point_at_parameter(2.0);
+                col += color(&r, &world);
+            }
+            col /= ns as f32;
 
             write_color(&mut writer, col);
         }
     }
-    //bar.finish();
+    bar.finish();
  
     Ok(())
 }
