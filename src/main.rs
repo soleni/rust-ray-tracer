@@ -1,5 +1,10 @@
 #![allow(unused_imports)]
 
+extern crate image;
+use image::{GenericImage, GenericImageView, ImageBuffer, RgbImage};
+
+use indicatif::ProgressBar;
+
 use std::io;
 use std::fs::File;
 use std::io::Write;
@@ -18,10 +23,6 @@ use sphere::*;
 use hitable::*;
 use hitablelist::*;
 use camera::*;
-
-use indicatif::ProgressBar;
-
-
 
 fn random_in_unit_sphere() -> Vec3{
     let mut p: Vec3;
@@ -48,21 +49,19 @@ fn color<T: Hitable>(ray : &Ray, world: &HitableList<T>) -> Vec3 {
 }
 
 fn main() -> io::Result<()> {
-    let mut writer = File::create("output.ppm").unwrap();
     let mut rng = rand::thread_rng();
 
-    let nx = 400;
-    let ny = 200;
-    let ns = 50;
-
-    write!(&mut writer, "P3\n{} {}\n255\n",nx, ny).unwrap();
+    let nx = 800;
+    let ny = 400; 
+    let ns = 30;
+    let mut img_buffer: RgbImage = ImageBuffer::new(nx, ny);
 
     let hitable = vec![ make_sphere(&make_vec3(0.0, 0.0, -1.0), 0.5),
                                     make_sphere(&make_vec3(0.0, -100.5, -1.0), 100.0)];
     let world = make_hitable_list(hitable, 2);
     let camera = standart_camera();
 
-    let bar = ProgressBar::new(ny);
+    let bar = ProgressBar::new(ny as u64);
     for j in (0..ny).rev() {
         bar.inc(1);
         for i in 0..nx {
@@ -77,10 +76,12 @@ fn main() -> io::Result<()> {
             col /= ns as f32;
             col = col.sqrt();
 
-            write_color(&mut writer, col);
+            col *= 255.99;
+            img_buffer.put_pixel(nx - i - 1, ny - j - 1, image::Rgb([col.x as u8, col.y as u8, col.z as u8]));
         }
     }
     bar.finish();
- 
+    
+    img_buffer.save("output.png").unwrap();
     Ok(())
 }

@@ -98,6 +98,14 @@ impl Add<&Vec3> for Vec3 {
     }
 }
 
+impl Add<&f32> for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: &f32) -> Self {
+        Self{x: self.x + rhs, y: self.y + rhs, z: self.z + rhs}
+    }
+}
+
 // Vec - Vec
 impl Sub<Vec3> for Vec3 {
     type Output = Self;
