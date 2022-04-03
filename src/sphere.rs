@@ -19,6 +19,12 @@ pub struct Sphere {
     pub material: Arc<dyn Material>,
 }
 
+impl Sphere {
+    pub fn new(center: &Vec3, radius: f32, material: Arc<dyn Material>) -> Self {
+        Sphere { center: *center, radius, material }
+    }
+}
+
 impl Hitable for Sphere{
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord<'a>) -> bool{
         let oc = ray.origin() - self.center;

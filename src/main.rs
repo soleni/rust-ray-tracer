@@ -33,7 +33,7 @@ use materials::*;
 
 static NX: u32 = 800;
 static NY: u32 = 400;
-static NS: u32 = 5;
+static NS: u32 = 30;
 
 static THREADS_NUM: usize = 6;
 
@@ -79,16 +79,14 @@ fn main() -> io::Result<()> {
     // Png output image buffer
     let img_buffer = Arc::new(Mutex::new(ImageBuffer::new(NX, NY)));
 
-    // Prerender objects
-    let m1 = Arc::new(Metal{albedo: make_vec3(0.8, 0.6, 0.2)}); 
-    let m2 = Arc::new(Lambertian{albedo: make_vec3(0.8, 0.8, 0.0)});
-
-    let s1 =  Arc::new(Sphere{center: make_vec3(0.0, 0.0, -1.0), radius: 0.5, material: m1.clone()});
-    let s2 =  Arc::new(Sphere{center: make_vec3(-4.0, 0.0, -1.0), radius: 0.5, material: m1.clone()});
-    let s3 =  Arc::new(Sphere{center: make_vec3(3.0, 3.0, -5.0), radius: 2.0, material: m1.clone()});
-    let s4 = Arc::new(Sphere{center: make_vec3(0.0, -100.5, -1.0), radius: 100.0, material: m2.clone()});
-
-    let hitable: Vec<Arc<dyn Hitable>> = vec![s1, s2, s3, s4];
+    // Objects
+    let hitable: Vec<Arc<dyn Hitable>> = vec![
+        Arc::new( Sphere::new(&Vec3::new(0.0, 0.0, -1.0), 0.5, Arc::new(Lambertian::new(&Vec3::new(0.1, 0.2, 0.5))))),
+        Arc::new( Sphere::new(&Vec3::new(0.0, -100.5, -1.0), 100.0, Arc::new(Lambertian::new(&Vec3::new(0.8, 0.8, 0.0))))),
+        Arc::new( Sphere::new(&Vec3::new(1.0, 0.0, -1.0), 0.5, Arc::new(Metal::new(&Vec3::new(0.8, 0.6, 0.2))))),
+        Arc::new( Sphere::new(&Vec3::new(-1.0, 0.0, -1.0), 0.5, Arc::new(Dielectric::new(1.5)))),
+        Arc::new( Sphere::new(&Vec3::new(-1.0, 0.0, -1.0), -0.49, Arc::new(Dielectric::new(1.5)))),
+    ];
 
     let world = HitableList{list: hitable};
     let camera = Arc::new(standart_camera());
