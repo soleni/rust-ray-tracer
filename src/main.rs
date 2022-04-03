@@ -33,7 +33,7 @@ use materials::*;
 
 static NX: u32 = 800;
 static NY: u32 = 400;
-static NS: u32 = 30;
+static NS: u32 = 5;
 
 static THREADS_NUM: usize = 6;
 
@@ -43,7 +43,7 @@ fn color(ray : &Ray, world: &HitableList, depth: i32) -> Vec3 {
     if world.hit(ray, 0.001, f32::MAX, &mut rec) {
         let mut scattered: Ray = Ray{a: unit_vector(), b: unit_vector()};
         let mut attenuation: Vec3 = unit_vector();
-        if depth < 50 && rec.material.scatter(ray, &mut rec, &mut attenuation, &mut scattered) {
+        if depth < 10 && rec.material.scatter(ray, &mut rec, &mut attenuation, &mut scattered) {
             return attenuation * color(&scattered, world, depth + 1);
         } else {
             return unit_vector();
@@ -77,39 +77,47 @@ fn main() -> io::Result<()> {
     let now = Instant::now();
 
     // Png output image buffer
-    let mut img_buffer = ImageBuffer::new(NX, NY);
+    let img_buffer = Arc::new(Mutex::new(ImageBuffer::new(NX, NY)));
 
     // Prerender objects
-    let m1 = Metal{albedo: make_vec3(0.8, 0.6, 0.2)}; 
-    let m2 = Lambertian{albedo: make_vec3(0.8, 0.8, 0.0)};
+    let m1 = Arc::new(Metal{albedo: make_vec3(0.8, 0.6, 0.2)}); 
+    let m2 = Arc::new(Lambertian{albedo: make_vec3(0.8, 0.8, 0.0)});
 
-    let s1 =  Sphere{center: make_vec3(0.0, 0.0, -1.0), radius: 0.5, material: &m1};
-    let s2 =  Sphere{center: make_vec3(-4.0, 0.0, -1.0), radius: 0.5, material: &m1};
-    let s3 =  Sphere{center: make_vec3(3.0, 3.0, -5.0), radius: 2.0, material: &m1};
-    let s4 = Sphere{center: make_vec3(0.0, -100.5, -1.0), radius: 100.0, material: &m2};
+    let s1 =  Arc::new(Sphere{center: make_vec3(0.0, 0.0, -1.0), radius: 0.5, material: m1.clone()});
+    let s2 =  Arc::new(Sphere{center: make_vec3(-4.0, 0.0, -1.0), radius: 0.5, material: m1.clone()});
+    let s3 =  Arc::new(Sphere{center: make_vec3(3.0, 3.0, -5.0), radius: 2.0, material: m1.clone()});
+    let s4 = Arc::new(Sphere{center: make_vec3(0.0, -100.5, -1.0), radius: 100.0, material: m2.clone()});
 
-    let hitable: Vec<&dyn Hitable> = vec![&s1, &s2, &s3, &s4];
+    let hitable: Vec<Arc<dyn Hitable>> = vec![s1, s2, s3, s4];
 
-    let world = make_hitable_list(hitable, 2);
-    let camera = standart_camera();
+    let world = HitableList{list: hitable};
+    let camera = Arc::new(standart_camera());
  
     // Progress Bar
     let bar = ProgressBar::new(100);
     let bar_counter = ((NX * NY) as f32 / 100.0) as u32;
 
+    let pool = ThreadPool::new(THREADS_NUM);
     for j in (0..NY).rev() {
         for i in 0..NX {
-            let col = make_ray(&camera, &world, i, j);
-            img_buffer.put_pixel(NX - i - 1, NY - j - 1, image::Rgb([col.x as u8, col.y as u8, col.z as u8]));           
+            let world = world.clone();
+            let camera = camera.clone();
+            let img_buffer = img_buffer.clone();
+
+            pool.execute(move|| {
+                let col = make_ray(&camera, &world, i, j);
+                img_buffer.lock().unwrap().put_pixel(NX - i - 1, NY - j - 1, image::Rgb([col.x as u8, col.y as u8, col.z as u8]));                        
+            });
 
             if (j*NX + i) % bar_counter == 0 {
                 bar.inc(1);
             }
         }
+        pool.join();
     } 
     bar.finish();
 
-    img_buffer.save("output.png").unwrap();
+    img_buffer.lock().unwrap().save("output.png").unwrap();
 
     println!("Time elapsed: {} sec.", now.elapsed().as_secs());
     Ok(())
