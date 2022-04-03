@@ -33,7 +33,7 @@ use materials::*;
 
 static NX: u32 = 800;
 static NY: u32 = 400;
-static NS: u32 = 30;
+static NS: u32 = 200;
 
 static THREADS_NUM: usize = 6;
 
