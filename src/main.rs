@@ -31,9 +31,9 @@ use hitablelist::*;
 use camera::*;
 use materials::*;
 
-static NX: u32 = 800;
-static NY: u32 = 400;
-static NS: u32 = 200;
+static NX: u32 = 1200;
+static NY: u32 = 800;
+static NS: u32 = 1000;
 
 static THREADS_NUM: usize = 6;
 
@@ -73,6 +73,41 @@ fn make_ray(camera: &Camera, world: &HitableList, x: u32, y: u32) -> Vec3 {
     col
 }
 
+fn create_scene() -> Vec<Arc<dyn Hitable>> {
+    let mut rng = rand::thread_rng();
+
+    let mut list: Vec<Arc<dyn Hitable>> = vec![];
+    
+    list.push(Arc::new(Sphere::new(&Vec3::new(0.0, -1000.0, 0.0), 1000.0, Arc::new(Lambertian::new(&Vec3::new(0.1, 0.2, 0.5))))));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let chose_mat = rng.gen::<f32>();
+            let center = Vec3::new(a as f32 + 0.9*rng.gen::<f32>(), 0.2, b as f32 + 0.9*rng.gen::<f32>());
+
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if chose_mat < 0.8 {
+                    let mut prop = Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>());
+                    prop *= prop;
+                    list.push(Arc::new(Sphere::new(&center, 0.2, Arc::new(Lambertian::new(&prop)))));
+                } else if chose_mat < 0.95 {
+                    let mut prop = Vec3::new(rng.gen::<f32>() + 1.0, rng.gen::<f32>() + 1.0, rng.gen::<f32>() + 1.0);
+                    prop *= 0.5;
+                    list.push(Arc::new(Sphere::new(&center, 0.2, Arc::new(Lambertian::new(&prop)))));
+                } else {
+                    list.push(Arc::new(Sphere::new(&center, 0.2, Arc::new(Dielectric::new(1.5)))));
+                }
+            }
+        }
+    }
+
+    list.push(Arc::new(Sphere::new(&Vec3::new(0.0, 1.0, 0.0), 1.0, Arc::new(Dielectric::new(1.5)))));
+    list.push(Arc::new(Sphere::new(&Vec3::new(-4.0, 1.0, 0.0), 1.0, Arc::new(Lambertian::new(&Vec3::new(0.4, 0.2, 0.1))))));
+    list.push(Arc::new(Sphere::new(&Vec3::new(4.0, 1.0, 0.0), 1.0, Arc::new(Metal::new(&Vec3::new(0.7, 0.6, 0.5))))));
+    
+    list 
+}
+
 fn main() -> io::Result<()> {
     let now = Instant::now();
 
@@ -80,16 +115,18 @@ fn main() -> io::Result<()> {
     let img_buffer = Arc::new(Mutex::new(ImageBuffer::new(NX, NY)));
 
     // Objects
-    let hitable: Vec<Arc<dyn Hitable>> = vec![
-        Arc::new( Sphere::new(&Vec3::new(0.0, 0.0, -1.0), 0.5, Arc::new(Lambertian::new(&Vec3::new(0.1, 0.2, 0.5))))),
-        Arc::new( Sphere::new(&Vec3::new(0.0, -100.5, -1.0), 100.0, Arc::new(Lambertian::new(&Vec3::new(0.8, 0.8, 0.0))))),
-        Arc::new( Sphere::new(&Vec3::new(1.0, 0.0, -1.0), 0.5, Arc::new(Metal::new(&Vec3::new(0.8, 0.6, 0.2))))),
-        Arc::new( Sphere::new(&Vec3::new(-1.0, 0.0, -1.0), 0.5, Arc::new(Dielectric::new(1.5)))),
-        Arc::new( Sphere::new(&Vec3::new(-1.0, 0.0, -1.0), -0.49, Arc::new(Dielectric::new(1.5)))),
-    ];
-
+    let hitable = create_scene();
     let world = HitableList{list: hitable};
-    let camera = Arc::new(standart_camera());
+
+    let lookfrom = Vec3::new(8.0, 2.0, -2.0);
+    let lookat = Vec3::new(0.0, 0.5, 0.0);
+    let dist_to_focus = (lookfrom - lookat).length();
+    let aperture = 0.1;
+    let camera = Arc::new(Camera::new(
+        lookfrom, lookat, Vec3::new(0.0, 1.0, 0.0),
+        50.0, NX as f32 / NY as f32, 
+        aperture, dist_to_focus)
+    );
  
     // Progress Bar
     let bar = ProgressBar::new(100);
