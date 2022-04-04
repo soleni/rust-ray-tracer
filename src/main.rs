@@ -43,7 +43,7 @@ fn color(ray : &Ray, world: &HitableList, depth: i32) -> Vec3 {
     if world.hit(ray, 0.001, f32::MAX, &mut rec) {
         let mut scattered: Ray = Ray{a: unit_vector(), b: unit_vector()};
         let mut attenuation: Vec3 = unit_vector();
-        if depth < 10 && rec.material.scatter(ray, &mut rec, &mut attenuation, &mut scattered) {
+        if depth < 20 && rec.material.scatter(ray, &mut rec, &mut attenuation, &mut scattered) {
             return attenuation * color(&scattered, world, depth + 1);
         } else {
             return unit_vector();
@@ -86,14 +86,14 @@ fn create_scene() -> Vec<Arc<dyn Hitable>> {
             let center = Vec3::new(a as f32 + 0.9*rng.gen::<f32>(), 0.2, b as f32 + 0.9*rng.gen::<f32>());
 
             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                if chose_mat < 0.8 {
+                if chose_mat < 0.75 {
                     let mut prop = Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>());
                     prop *= prop;
                     list.push(Arc::new(Sphere::new(&center, 0.2, Arc::new(Lambertian::new(&prop)))));
-                } else if chose_mat < 0.95 {
+                } else if chose_mat < 0.9 {
                     let mut prop = Vec3::new(rng.gen::<f32>() + 1.0, rng.gen::<f32>() + 1.0, rng.gen::<f32>() + 1.0);
                     prop *= 0.5;
-                    list.push(Arc::new(Sphere::new(&center, 0.2, Arc::new(Lambertian::new(&prop)))));
+                    list.push(Arc::new(Sphere::new(&center, 0.2, Arc::new(Metal::new(&prop)))));
                 } else {
                     list.push(Arc::new(Sphere::new(&center, 0.2, Arc::new(Dielectric::new(1.5)))));
                 }
@@ -120,8 +120,8 @@ fn main() -> io::Result<()> {
 
     let lookfrom = Vec3::new(8.0, 2.0, -2.0);
     let lookat = Vec3::new(0.0, 0.5, 0.0);
-    let dist_to_focus = (lookfrom - lookat).length();
-    let aperture = 0.1;
+    let dist_to_focus = 8.0;
+    let aperture = 0.0; // no focus
     let camera = Arc::new(Camera::new(
         lookfrom, lookat, Vec3::new(0.0, 1.0, 0.0),
         50.0, NX as f32 / NY as f32, 
